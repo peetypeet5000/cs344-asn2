@@ -5,14 +5,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <dirent.h>
 
 // For struct
 #include "file_parser.h"
 
+void file_menu();
 void user_menu(struct movie*);
-void get_movies_year(struct movie*);
-void get_movies_lang(struct movie*);
-void get_movies_rating(struct movie*);
-void free_list(struct movie*);
+char* get_largest_file(DIR*);
+char* get_smallest_file(DIR*);
+bool is_csv(char*);
 
 #endif

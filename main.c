@@ -6,17 +6,30 @@ to process file & start user interactive menu
 */
 int main(int argc, char *argv[])
 {
-    if (argc < 2)
-    {
-        printf("You must provide the name of the file to process\n");
-        printf("Example usage: ./movies movies_sample_1.csv\n");
-        return EXIT_FAILURE;
-    }
-    //Read in movied
-    struct movie *list = process_file(argv[1]);
+    // Start base-level menu
+    bool done = false;
+    int selection = 0;
 
-    // Start interactive menu
-    user_menu(list);
+    while(done != true) {
+        printf("\n1. Select file to process\n2. Exit the program\nEnter a choice 1 or 2: ");
+        scanf ("%d", &selection);
+
+        switch(selection) {
+            // Enter movie interface
+            case 1:
+                file_menu();
+                break;
+            // Quit the program
+            case 2:
+                done = true;
+                break;
+
+            // Invalid Choice
+            default:
+                printf("\nYou entered an incorrect choice. Try again.\n");
+                break;
+        }
+    }
     
     return EXIT_SUCCESS;
 }

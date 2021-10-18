@@ -1,164 +1,128 @@
 #include "interface.h"
 
+#define FILE_PREFIX = "movies_"
+#define ONID = "lamontap"
+
 // Driver function for the user menu, runs forever
 //until user selects '4' to exit.
-void user_menu(struct movie* list) {
-    bool done = false;
+void file_menu() {
+    bool good = true;
+    char* file;
     int selection = 0;
 
-    while(done != true) {
-        printf("\n1. Show movies released in the specified year\n2. Show highest rated movie for each year\n3. Show the title and year of release of all movies in a specific language\n4. Exit from the program\n\n");
-        printf("Enter a choice from 1 to 4: ");
-        scanf ("%d", &selection);
+    // Delcare dir* var, open current directory 
+    DIR* working_dir =  opendir(".");
+    struct dirent *aDir;
 
-        switch(selection) {
-            // Get movies for a certain year
-            case 1:
-                get_movies_year(list);
-                break;
-            // Get highest rated movie each year
-            case 2:
-                get_movies_rating(list);
-                break;
-            // Get movies for a certain language
-            case 3:
-                get_movies_lang(list);
-                break;
-            // End Program
-            case 4:
-                free_list(list);
-                done = true;
-                break;
+    printf("\nWhich file you want to process?\nEnter 1 to pick the largest file\nEnter 2 to pick the smallest file\nEnter 3 to specify the name of a file\n\n");
+    printf("Enter a choice from 1 to 3: ");
+    scanf ("%d", &selection);
 
-            // Invalid Choice
-            default:
-                printf("\nYou entered an incorrect choice. Try again.\n\n");
-                break;
-        }
+    switch(selection) {
+        // Get largest file
+        case 1:
+            file = get_largest_file(working_dir);
+            break;
+        // Get smallest file
+        case 2:
+            file = get_smallest_file(working_dir);
+            break;
+        // Get custom file
+        case 3:
+            break;
+
+        // Invalid Choice
+        default:
+            printf("\nYou entered an incorrect choice. Try again.\n");
+            good = false;
+            break;
+    }
+
+    //If file sucessfully found, process it
+    if(good == true) {
+        printf("Now processing the chosen file named %s", file);
+        //process_file(file);
+
+        // Clear string memory
+        //free(file);
     }
 }
 
 
-// Gets the movies from the linked list that
-// released in a user-inputted year
-void get_movies_year(struct movie* list) {
-    int year = 0;
-    int movies_printed = 0;
-    struct movie* curr = list;
+char* get_largest_file(DIR* dir) {
+    struct dirent* file;
+    struct stat file_stat;
+    long long int biggest_size = 0;
+    char* biggest_name;
 
-    // Get user year input
-    printf("\nEnter the year for which you want to see movies: ");
-    scanf ("%d", &year);
-
-    // If a valid year, traverse the linked list
-    if (year >= 1900 && year <= 2021) {
-        while (curr != NULL) {
-            // If in the selected year, print the title
-            if(curr->year == year) {
-                movies_printed++;
-                printf("\n%s", curr->title);
+    // Read each file in directory
+    while((file = readdir(dir)) != NULL){
+        // If the first part of the name matches the prefix, check it
+        if((strncmp(file->d_name, "movies_", strlen("movies_")) == 0) && (is_csv(file->d_name) == true)) {
+            stat(file->d_name, &file_stat);
+            
+            // If given file is largest, record it
+            if(file_stat.st_size > biggest_size) {
+                biggest_name = file->d_name;
+                biggest_size = file_stat.st_size;
             }
-
-            // Move to next node in list
-            curr = curr->next;
         }
-        printf("\n");
 
-        // If no movies found, print message
-        if(movies_printed == 0) {
-            printf("No data about movies released in the year %d.\n", year);
-        }
+    }
+
+    // If a file was found, return it
+    if(biggest_size > 0) {
+        return biggest_name;
     } else {
-        printf("\nYou entered an invalid year. Please try again\n");
-        get_movies_year(list);
+        printf("No matching files found\n");
+        return "";
     }
 }
 
 
-// Get all movies in user-specified language
-// Case sensetive
-void get_movies_lang(struct movie* list) {
-    char lang[20];
-    int movies_printed = 0;
-    struct movie* curr = list;
 
-    // Get user language input
-    printf("\nEnter the language for which you want to see movies: ");
-    scanf ("%19s", &lang);
+char* get_smallest_file(DIR* dir) {
+    struct dirent* file;
+    struct stat file_stat;
+    long long int smallest_size = 0;
+    char* smallest_name;
 
-    // Traverse entire linked list
-    while (curr != NULL) {
-        for(int i = 0; i < curr->num_langs; i++) {
-            // If any of languages match user string, print movie
-            // Only match up to length of movie lang
-            if(strncmp(curr->langs[i], lang, strlen(curr->langs[i])) == 0) {
-                printf("\n%d %s", curr->year, curr->title);
-                movies_printed++;
+    // Read each file in directory
+    while((file = readdir(dir)) != NULL){
+        // If the first part of the name matches the prefix, check it
+        if((strncmp(file->d_name, "movies_", strlen("movies_")) == 0) && (is_csv(file->d_name) == true)) {
+            stat(file->d_name, &file_stat);
+            
+            // If given file is smallest or the first one, record it
+            if(file_stat.st_size < smallest_size || smallest_size == 0) {
+                smallest_name = file->d_name;
+                smallest_size = file_stat.st_size;
             }
         }
 
-        // Move to next node in list
-        curr = curr->next;
     }
-    printf("\n");
 
-    // If no movies found, print message
-    if(movies_printed == 0) {
-        printf("No data about movies released in %s\n", lang);
+    // If a file was found, return it
+    if(smallest_size > 0) {
+        return smallest_name;
+    } else {
+        printf("No matching files found\n");
+        return "";
     }
 }
 
 
-// Get the highest rated movie for a specified year
-void get_movies_rating(struct movie* list) {
-    struct movie* curr = list;
-    struct movie highest;
 
-    // Loop thru list for each year 
-    for(int i = 1900; i < 2022; i++) {
-        // Reset highst rating tracker
-        highest.rating = 0.0;
-        
-        // Loop thru list, keep track of highest
-        while (curr != NULL) {
-            if(curr->year == i) {
-                // If found a higher, record the rating and title
-                if(curr->rating > highest.rating){
-                    highest.title = curr->title;
-                    highest.rating = curr->rating;
-                }
-            }
-        // Move to next node in list
-        curr = curr->next;
+bool is_csv(char* file) {
+    char* file_end = strrchr(file, '.');
+   
+   if(file_end != NULL) {
+        if(strncmp(file_end, ".csv", 4) == 0) {
+            return true;
         }
+   }
 
-        //Once traversed whole list, print highest(if any)
-        if(highest.rating > 0.0) {
-            printf("\n%d %.1f %s", i, highest.rating, highest.title);
-        }
 
-        // Reset to head of list
-        curr = list;
-    }
-    printf("\n");
+    return false;
 }
 
-
-// Free memory associated with linked list
-// once program is set to close
-void free_list(struct movie* list) {
-    struct movie* curr = list;
-    struct movie* next = list;
-
-    // While there are still more nodes in the list
-    while (next != NULL) {
-        curr = next;
-        free(curr->title);
-        for(int i = 0; i < curr->num_langs; i++) {
-            free(curr->langs[i]);
-        }
-        // Move to next node in list
-        next = curr->next;
-        free(curr);
-        }
-}
