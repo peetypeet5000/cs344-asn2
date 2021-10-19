@@ -1,8 +1,7 @@
 #include "file_parser.h"
 
-/* Parse the current line which is space delimited and create a
-*  movie struct with the data in this line
-*/
+// Parse the current line which is space delimited and create a
+//  movie struct with the data in this line
 struct movie *create_movie(char *currLine)
 {
     struct movie *currMovie = malloc(sizeof(struct movie));
@@ -57,10 +56,9 @@ struct movie *create_movie(char *currLine)
     return currMovie;
 }
 
-/*
-* Return a linked list of movies by parsing data from
-* each line of the specified file.
-*/
+
+// Return a linked list of movies by parsing data from
+// each line of the specified file.
 struct movie *read_csv(char *filePath)
 {
     // Open the specified file for reading only
@@ -108,12 +106,14 @@ struct movie *read_csv(char *filePath)
     free(currLine);
     fclose(moviesFile);
 
-    printf("Processed file %s and parsed data for %i movies\n\n", filePath, num_lines);
+    printf("Processed file %s and parsed data for %i movies\n", filePath, num_lines);
     return head;
 }
 
 
-
+// Main function to create folder structure
+// for movie list. Creates dir, files, reads csv, 
+// and cleans up.
 void process_file(char* file) {
     char parent_dir_name[28];
     int random_val = get_random();
@@ -124,21 +124,24 @@ void process_file(char* file) {
     // Format parent directory name and create dir
     sprintf(parent_dir_name, "%s.movies.%d", ONID, random_val);
     mkdir(parent_dir_name, 750);
-
-    // Open new directory
-    DIR* movies_dir = opendir(file);
+    printf("Created directory with name %s\n\n", parent_dir_name);
 
     // Add movie text files
     add_movies_by_year(parent_dir_name, list);
 
-
+    // Free dynamic memory from list
+    free_list(list);
 }
 
 
+
+// Creates a file for each year in the fiven folder dir
+// each file contains the title of the movies from that year
 void add_movies_by_year(char* dir, struct movie* list) {
     struct movie* curr = list;
+    // Declare large enough stack character buffers
     char file_name[37];
-    char file_line[256];
+    char* file_line;
 
     // Loop thru list for each valid year 
     for(int i = 1900; i < 2022; i++) {
@@ -156,13 +159,13 @@ void add_movies_by_year(char* dir, struct movie* list) {
 	            }
 
                 // Write movie to file
+                file_line = malloc(strlen(curr->title) + 5);
                 sprintf(file_line, "%s\n", curr->title);
-                int bytes = write(year_file, file_line, strlen(file_line));
-                int len = strlen(file_line);
-                printf("printed %d bytes len %d", bytes, len);
+                write(year_file, file_line, strlen(file_line));
 
                 // Close file
                 close(year_file);
+                free(file_line);
             }
         // Move to next node in list
         curr = curr->next;
@@ -171,17 +174,37 @@ void add_movies_by_year(char* dir, struct movie* list) {
         // Reset to head of list
         curr = list;
     }
-    printf("\n");
 }
 
 
+
+//Free memory associated with linked list
+// once program is set to close
+void free_list(struct movie* list) {
+    struct movie* curr = list;
+    struct movie* next = list;
+
+    // While there are still more nodes in the list
+    while (next != NULL) {
+        curr = next;
+        free(curr->title);
+        for(int i = 0; i < curr->num_langs; i++) {
+            free(curr->langs[i]);
+        }
+        // Move to next node in list
+        next = curr->next;
+        free(curr);
+        }
+}
+
+
+// Gets a random int between 0 - 99999 (inclusive)
 int get_random() {
     // Seed function
     srand(time(NULL));
 
-    int random = rand();
-
     // Use modulus to get in range
+    int random = rand();
     random = random % 100000;
 
     return random;

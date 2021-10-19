@@ -28,6 +28,7 @@ struct movie *create_movie(char*);
 struct movie *read_csv(char*);
 void process_file(char*);
 void add_movies_by_year(char*, struct movie*);
+void free_list(struct movie*);
 int get_random();
 
 #endif

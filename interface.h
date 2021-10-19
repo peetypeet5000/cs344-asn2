@@ -14,8 +14,9 @@
 
 void file_menu();
 void user_menu(struct movie*);
-char* get_largest_file(DIR*);
-char* get_smallest_file(DIR*);
+char* get_largest_file(DIR*, bool*);
+char* get_smallest_file(DIR*, bool*);
+char* get_named_file(DIR*, bool*);
 bool is_csv(char*);
 
 #endif

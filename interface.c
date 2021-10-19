@@ -3,7 +3,7 @@
 // Driver function for the user menu, runs forever
 //until user selects '4' to exit.
 void file_menu() {
-    bool good = true;
+    bool good = false;
     char* file;
     int selection = 0;
 
@@ -11,41 +11,42 @@ void file_menu() {
     DIR* working_dir =  opendir(".");
     struct dirent *aDir;
 
-    printf("\nWhich file you want to process?\nEnter 1 to pick the largest file\nEnter 2 to pick the smallest file\nEnter 3 to specify the name of a file\n\n");
-    printf("Enter a choice from 1 to 3: ");
-    scanf ("%d", &selection);
+    while(good == false) {
+        printf("\nWhich file you want to process?\nEnter 1 to pick the largest file\nEnter 2 to pick the smallest file\nEnter 3 to specify the name of a file\n\n");
+        printf("Enter a choice from 1 to 3: ");
+        scanf ("%d", &selection);
 
-    switch(selection) {
-        // Get largest file
-        case 1:
-            file = get_largest_file(working_dir);
-            break;
-        // Get smallest file
-        case 2:
-            file = get_smallest_file(working_dir);
-            break;
-        // Get custom file
-        case 3:
-            break;
+        switch(selection) {
+            // Get largest file
+            case 1:
+                file = get_largest_file(working_dir, &good);
+                break;
+            // Get smallest file
+            case 2:
+                file = get_smallest_file(working_dir, &good);
+                break;
+            // Get custom file
+            case 3:
+                file = get_named_file(working_dir, &good);
+                break;
 
-        // Invalid Choice
-        default:
-            printf("\nYou entered an incorrect choice. Try again.\n");
-            good = false;
-            break;
+            // Invalid Choice
+            default:
+                printf("\nYou entered an incorrect choice. Try again.\n");
+                good = false;
+                break;
+        }
     }
 
     //If file sucessfully found, process it
-    if(good == true) {
-        printf("Now processing the chosen file named %s\n", file);
-        process_file(file);
-    }
+    printf("\nNow processing the chosen file named %s\n", file);
+    process_file(file);
 
     closedir(working_dir);
 }
 
 
-char* get_largest_file(DIR* dir) {
+char* get_largest_file(DIR* dir, bool* good) {
     struct dirent* file;
     struct stat file_stat;
     long long int biggest_size = 0;
@@ -68,16 +69,18 @@ char* get_largest_file(DIR* dir) {
 
     // If a file was found, return it
     if(biggest_size > 0) {
+        *good = true;
         return biggest_name;
     } else {
         printf("No matching files found\n");
+        *good = false;
         return "";
     }
 }
 
 
 
-char* get_smallest_file(DIR* dir) {
+char* get_smallest_file(DIR* dir, bool* good) {
     struct dirent* file;
     struct stat file_stat;
     long long int smallest_size = 0;
@@ -100,11 +103,40 @@ char* get_smallest_file(DIR* dir) {
 
     // If a file was found, return it
     if(smallest_size > 0) {
+        *good = true;
         return smallest_name;
     } else {
         printf("No matching files found\n");
+        *good = false;
         return "";
     }
+}
+
+
+
+char* get_named_file(DIR* dir, bool* good) {
+    char user_input[255];
+    struct dirent* file;
+    struct stat file_stat;
+
+    printf("\nEnter the complete file name: ");
+    scanf ("%s", user_input);
+
+    // Read each file in directory
+    while((file = readdir(dir)) != NULL){
+        // If the first part of the name matches the prefix, check it
+        if((strncmp(file->d_name, user_input, strlen(user_input)) == 0)) {
+            *good = true;
+            return file->d_name;
+        }
+
+    }
+
+    // If nothing was found, print error
+    printf("\nThe file %s was not found. Try again.\n", user_input);
+    *good = false;
+    return "";
+
 }
 
 
