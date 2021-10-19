@@ -61,7 +61,7 @@ struct movie *create_movie(char *currLine)
 * Return a linked list of movies by parsing data from
 * each line of the specified file.
 */
-struct movie *process_file(char *filePath)
+struct movie *read_csv(char *filePath)
 {
     // Open the specified file for reading only
     FILE *moviesFile = fopen(filePath, "r");
@@ -110,4 +110,79 @@ struct movie *process_file(char *filePath)
 
     printf("Processed file %s and parsed data for %i movies\n\n", filePath, num_lines);
     return head;
+}
+
+
+
+void process_file(char* file) {
+    char parent_dir_name[28];
+    int random_val = get_random();
+
+    // Read given file and create linked list
+    struct movie* list = read_csv(file);
+
+    // Format parent directory name and create dir
+    sprintf(parent_dir_name, "%s.movies.%d", ONID, random_val);
+    mkdir(parent_dir_name, 750);
+
+    // Open new directory
+    DIR* movies_dir = opendir(file);
+
+    // Add movie text files
+    add_movies_by_year(parent_dir_name, list);
+
+
+}
+
+
+void add_movies_by_year(char* dir, struct movie* list) {
+    struct movie* curr = list;
+    char file_name[37];
+    char file_line[256];
+
+    // Loop thru list for each valid year 
+    for(int i = 1900; i < 2022; i++) {
+        // Loop thru list, keep track of highest
+        while (curr != NULL) {
+            // If the year is found
+            if(curr->year == i) {
+                sprintf(file_name, "%s/%d.txt", dir, i);
+                int year_file = open(file_name, O_WRONLY | O_CREAT | O_APPEND, 640);
+
+                // Print any errors
+                if(year_file == -1){
+                    perror("Error");
+                    exit(1);
+	            }
+
+                // Write movie to file
+                sprintf(file_line, "%s\n", curr->title);
+                int bytes = write(year_file, file_line, strlen(file_line));
+                int len = strlen(file_line);
+                printf("printed %d bytes len %d", bytes, len);
+
+                // Close file
+                close(year_file);
+            }
+        // Move to next node in list
+        curr = curr->next;
+        }
+
+        // Reset to head of list
+        curr = list;
+    }
+    printf("\n");
+}
+
+
+int get_random() {
+    // Seed function
+    srand(time(NULL));
+
+    int random = rand();
+
+    // Use modulus to get in range
+    random = random % 100000;
+
+    return random;
 }

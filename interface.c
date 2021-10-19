@@ -1,8 +1,5 @@
 #include "interface.h"
 
-#define FILE_PREFIX = "movies_"
-#define ONID = "lamontap"
-
 // Driver function for the user menu, runs forever
 //until user selects '4' to exit.
 void file_menu() {
@@ -40,12 +37,11 @@ void file_menu() {
 
     //If file sucessfully found, process it
     if(good == true) {
-        printf("Now processing the chosen file named %s", file);
-        //process_file(file);
-
-        // Clear string memory
-        //free(file);
+        printf("Now processing the chosen file named %s\n", file);
+        process_file(file);
     }
+
+    closedir(working_dir);
 }
 
 
